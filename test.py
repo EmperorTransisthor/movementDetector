@@ -1,12 +1,12 @@
 import os, sys
-#currentdir = os.path.dirname(os.path.realpath(__file__))
-#sys.path.append(os.path.dirname(os.path.dirname(currentdir)))
+currentdir = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.dirname(os.path.dirname(currentdir)))
 from LoRaRF import SX127x
 import time
 
 # Begin LoRa radio and set NSS, reset, busy, IRQ, txen, and rxen pin with connected Raspberry Pi gpio pins
 # IRQ pin not used in this example (set to -1). Set txen and rxen pin to -1 if RF module doesn't have one
-busId = 1; csId = 0
+busId = 0; csId = 0
 resetPin = 22; irqPin = -1; txenPin = -1; rxenPin = -1
 LoRa = SX127x()
 print("Begin LoRa radio")
@@ -51,7 +51,7 @@ counter = 0
 
 # Transmit message continuously
 while True :
-
+    print("dupa")
     # Transmit message and counter
     # write() method must be placed between beginPacket() and endPacket()
     LoRa.beginPacket()
