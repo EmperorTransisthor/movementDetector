@@ -1,73 +1,154 @@
 import os, sys
+from pickle import TRUE
 currentdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.dirname(os.path.dirname(currentdir)))
 from LoRaRF import SX127x
+import wiringpi
 import time
 
-# Begin LoRa radio and set NSS, reset, busy, IRQ, txen, and rxen pin with connected Raspberry Pi gpio pins
-# IRQ pin not used in this example (set to -1). Set txen and rxen pin to -1 if RF module doesn't have one
-busId = 0; csId = 0
-resetPin = 22; irqPin = -1; txenPin = -1; rxenPin = -1
-LoRa = SX127x()
-print("Begin LoRa radio")
-if not LoRa.begin(busId, csId, resetPin, irqPin, txenPin, rxenPin) :
-    raise Exception("Something wrong, can't begin LoRa radio")
+ssPin = 6
+dio0 = 7
+RST = 0
+CHANNEL = 0
+freq = 868100000
+message = [None]
 
-# Set frequency to 868.1 Mhz
-print("Set frequency to 868.1 Mhz")
-LoRa.setFrequency(868100000)
+def SetupLoRa():
+    wiringpi.digitalWrite(RST, 1)
+    time.sleep(0.1)
+    wiringpi.digitalWrite(RST, 0)
+    time.sleep(0.1)
+    
+    wiringpi.digitalWrite(RST, 0)
+    time.sleep(0.1)
+    wiringpi.digitalWrite(RST, 1)
 
-# Set TX power, this function will set PA config with optimal setting for requested TX power
-print("Set TX power to +17 dBm")
-LoRa.setTxPower(17, LoRa.TX_POWER_PA_BOOST)                     # TX power +17 dBm using PA boost pin
+    time.sleep(0.1)
 
-# Configure modulation parameter including spreading factor (SF), bandwidth (BW), and coding rate (CR)
-# Receiver must have same SF and BW setting with transmitter to be able to receive LoRa packet
-print("Set modulation parameters:\n\tSpreading factor = 7\n\tBandwidth = 125 kHz\n\tCoding rate = 4/5")
-LoRa.setSpreadingFactor(7)                                      # LoRa spreading factor: 7
-LoRa.setBandwidth(125000)                                       # Bandwidth: 125 kHz
-LoRa.setCodeRate(5)                                             # Coding rate: 4/5
+    #sx1276
+    print("SX1276 detected, starting.\n")
+    opmode(0x00)
+    #set frequency
+    frf = 31
 
-# Configure packet parameter including header type, preamble length, payload length, and CRC type
-# The explicit packet includes header contain CR, number of byte, and CRC type
-# Receiver can receive packet with different CR and packet parameters in explicit header mode
-print("Set packet parameters:\n\tExplicit header type\n\tPreamble length = 12\n\tPayload Length = 15\n\tCRC on")
-LoRa.setHeaderType(LoRa.HEADER_EXPLICIT)                        # Explicit header mode
-LoRa.setPreambleLength(12)                                      # Set preamble length to 12
-LoRa.setPayloadLength(15)                                       # Initialize payloadLength to 15
-LoRa.setCrcEnable(True)                                         # Set CRC enable
+    writeReg(0x06,(frf>>16))
+    writeReg(0x07,(frf>>8))
+    writeReg(0x08,(frf>>0))
+    writeReg(0x39, 0x34) #LoRaWAN public sync word
+    writeReg(0x1F,0x08)
+    writeReg(0x23,0x80)
+    writeReg(0x22,0x40)
+    writeReg(0x24,0xFF)
+    writeReg(0x0D, int.from_bytes(readReg(0x0F),"big"))
+    writeReg(0x0C, 0x23)
 
-# Set syncronize word for public network (0x34)
-print("Set syncronize word to 0x34")
-LoRa.setSyncWord(0x34)
+def readReg(addr):
+    spibuf = [None] * 2
+    selectreceiver()
+    spibuf[0] = addr & 0x7F
+    spibuf[1] = 0x00
+    recvData = wiringpi.wiringPiSPIDataRW(CHANNEL,bytes(spibuf))
+    unselectreceiver()
+    return recvData[1]
 
-print("\n-- LoRa Transmitter --\n")
+def selectreceiver():
+    wiringpi.digitalWrite(ssPin, 0)
 
-# Message to transmit
-message = "HeLoRa World!\0"
-messageList = list(message)
-for i in range(len(messageList)) : messageList[i] = ord(messageList[i])
-counter = 0
+def unselectreceiver():
+    wiringpi.digitalWrite(ssPin, 1)
 
-# Transmit message continuously
-while True :
-    print("dupa")
-    # Transmit message and counter
-    # write() method must be placed between beginPacket() and endPacket()
-    LoRa.beginPacket()
-    LoRa.write(messageList, len(messageList))
-    LoRa.write([counter], 1)
-    LoRa.endPacket()
+def opmode (mode):
+    reg = readReg(0x01)
+    mode = mode.to_bytes(2, 'big')
+    eight = 8
+    eight = eight.to_bytes(2, 'big')
+    and_op = bitwise_and_bytes(reg, eight)
+    eq = bitwise_or_bytes(and_op, mode)
+    eq = int.from_bytes(eq, "big")
+    writeReg(0x01, eq)
 
-    # Print message and counter
-    #print(f'messydz{message} counter {counter}')
+def writeReg(addr,value):
+    spibuf = [None] * 2
+    spibuf[0] = addr | 0x80
+    spibuf[1] = value
+    selectreceiver()
+    wiringpi.wiringPiSPIDataRW(CHANNEL, bytes(spibuf))
+    unselectreceiver()
 
-    # Wait until modulation process for transmitting packet finish
-    LoRa.wait()
+def opmodeLora():
+    u = 0x80
+    u |= 0x8;   #TBD: sx1276 high freq
+    writeReg(0x01, u)
 
-    # Print transmit time and data rate
-    print("Transmit time: {0:0.2f} ms | Data rate: {1:0.2f} byte/s".format(LoRa.transmitTime(), LoRa.dataRate()))
+def receive(payload):
 
-    # Don't load RF module with continous transmit
-    time.sleep(5)
-    counter = (counter + 1) % 256
+    writeReg(0x12, 0x40)
+
+    irqflags = readReg(0x12)
+
+    if((irqflags & 0x20) == 0x20):
+        print("CRC error\n")
+        writeReg(0x12, 0x20)
+        return False
+    else:
+        currentAddr = readReg(0x10)
+        receivedCount = readReg(0x13)
+        global receivedbytes
+        receivedbytes = receivedCount
+        writeReg(0x0D, currentAddr)
+        for i in range (0, receivedCount):
+            payload[i] = readReg(0x00)
+    return True
+
+def receivepacket():
+    SNR = 0
+    rssicorr = 0
+    if(wiringpi.digitalRead(dio0) == 1):
+        if(receive(message)):
+            value = readReg(0x19)
+            if( value & 0x80 ): #The SNR sign bit is 1
+
+                #Invert and divide by 4
+                value = ( ( ~value + 1 ) & 0xFF ) >> 2
+                SNR = -value
+            else:
+                #Divide by 4
+                SNR = ( value & 0xFF ) >> 2
+            
+            if (sx1272):
+                rssicorr = 139
+            else:
+                rssicorr = 157
+            
+            print(f"Packet RSSI: {readReg(0x1A)-rssicorr} ")
+            print(f"RSSI: {readReg(0x1B)-rssicorr}")
+            print(f"SNR: {SNR}")
+            print(f"Length: {int(receivedbytes)}")
+            print("\n")
+            print(f"Payload: {message}\n")
+
+def bitwise_and_bytes(a, b):
+    result_int = int.from_bytes(a, byteorder="big") & int.from_bytes(b, byteorder="big")
+    return result_int.to_bytes(max(len(a), len(b)), byteorder="big")
+
+def bitwise_or_bytes(a, b):
+    result_int = int.from_bytes(a, byteorder="big") | int.from_bytes(b, byteorder="big")
+    return result_int.to_bytes(max(len(a), len(b)), byteorder="big")
+
+wiringpi.wiringPiSetup()
+wiringpi.pinMode(ssPin, 1)
+wiringpi.pinMode(dio0, 0)
+wiringpi.pinMode(RST, 0)
+
+wiringpi.wiringPiSPISetup(CHANNEL, 500000)
+SetupLoRa()
+opmodeLora()
+opmode(0x01)
+opmode(0x05)
+print(f"Listening at SF{7} on {freq/1000000} Mhz.\n")
+print("------------------\n")
+while(1):
+    receivepacket()
+    time.sleep(0.01)
+    
+
