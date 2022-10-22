@@ -5,3 +5,4 @@ This is readme file
 - https://pypi.org/project/pyLoRa/
 - https://circuitdigest.com/microcontroller-projects/raspberry-pi-with-lora-peer-to-peer-communication-with-arduino
 - https://pypi.org/project/LoRaRF/
+- https://www.dragino.com/downloads/downloads/LoRa-GPS-HAT/LoRa_GPS_HAT_UserManual_v1.0.pdf
