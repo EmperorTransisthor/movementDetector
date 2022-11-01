@@ -1,0 +1,26 @@
+
+For anyone that is interested, I got this working with the following configuration on a fresh install of Raspbian Stretch:
+
+Implement the /boot/config.txt changes that mkshrps suggested by adding "dtoverlay=spi0-cs,cs0_pin=25" to the config.txt record.
+
+Use the following values in board_config
+DIO0 = 4
+DIO1 = 23
+DIO2 = 24
+DIO3 = 21
+LED = 18
+SWITCH = 7
+
+ADD THE FOLLOWING LINES TO constants.py
+@add_lookup
+class SPI_BAUD_RATE:
+MAX_SPEED_HZ = 5000
+@add_lookup
+class SPI_MODE:
+SPI_MODE = 0b01
+
+ADD THE FOLLOWING LINES TO LoRa.py at the top of the class definition right after " spi = BOARD.SpiDev() ":
+spi.max_speed_hz = SPI_BAUD_RATE.MAX_SPEED_HZ
+spi.mode = SPI_MODE.SPI_MODE
+
+With these changes / additions I was able to get the Dragino Hats talking to each other over the Pi's without having to do any soldering on the Hat.

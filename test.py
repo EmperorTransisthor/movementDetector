@@ -11,7 +11,7 @@ dio0 = 7
 RST = 0
 CHANNEL = 0
 freq = 868100000
-message = [None]
+message = [None]*256
 
 def SetupLoRa():
     wiringpi.digitalWrite(RST, 1)
@@ -72,6 +72,7 @@ def writeReg(addr,value):
     spibuf[0] = addr | 0x80
     spibuf[1] = value
     selectreceiver()
+    print(spibuf)
     wiringpi.wiringPiSPIDataRW(CHANNEL, bytes(spibuf))
     unselectreceiver()
 
@@ -83,8 +84,7 @@ def opmodeLora():
 def receive(payload):
 
     writeReg(0x12, 0x40)
-
-    irqflags = readReg(0x12)
+    irqflags = int.from_bytes(readReg(0x12), "big")
 
     if((irqflags & 0x20) == 0x20):
         print("CRC error\n")
@@ -92,22 +92,24 @@ def receive(payload):
         return False
     else:
         currentAddr = readReg(0x10)
+        currentAddr = int.from_bytes(currentAddr, "little")
         receivedCount = readReg(0x13)
         global receivedbytes
         receivedbytes = receivedCount
+        receivedbytes = int.from_bytes(receivedbytes, "little")
         writeReg(0x0D, currentAddr)
-        for i in range (0, receivedCount):
+        for i in range (0, receivedbytes):
             payload[i] = readReg(0x00)
     return True
 
 def receivepacket():
     SNR = 0
     rssicorr = 0
-    if(wiringpi.digitalRead(dio0) == 1):
+    if(wiringpi.digitalRead(dio0) == 0):
         if(receive(message)):
             value = readReg(0x19)
-            if( value & 0x80 ): #The SNR sign bit is 1
-
+            bit = 0x80
+            if(bitwise_and_bytes(value, bit.to_bytes(2, "big") ) ): #The SNR sign bit is 1
                 #Invert and divide by 4
                 value = ( ( ~value + 1 ) & 0xFF ) >> 2
                 SNR = -value
@@ -115,10 +117,7 @@ def receivepacket():
                 #Divide by 4
                 SNR = ( value & 0xFF ) >> 2
             
-            if (sx1272):
-                rssicorr = 139
-            else:
-                rssicorr = 157
+            rssicorr = 157
             
             print(f"Packet RSSI: {readReg(0x1A)-rssicorr} ")
             print(f"RSSI: {readReg(0x1B)-rssicorr}")
