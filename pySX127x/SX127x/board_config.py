@@ -48,7 +48,7 @@ class BOARD:
     # tell pySX127x here whether the attached RF module uses low-band (RF*_LF pins) or high-band (RF*_HF pins).
     # low band (called band 1&2) are 137-175 and 410-525
     # high band (called band 3) is 862-1020
-    low_band = True
+    low_band = False
 
     @staticmethod
     def setup():
