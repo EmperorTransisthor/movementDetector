@@ -9,6 +9,7 @@ sudo apt-get install python3-pip
 pip3 install RPi.GPIO
 pip3 install LoRaRF
 pip3 install wiringpi
+pip3 install opencv-python
 
 pythonVersion="$(python3 -V)"
 requiredVersion="3.6.0"

@@ -27,6 +27,7 @@ from time import sleep
 from SX127x.LoRa import *
 from SX127x.LoRaArgumentParser import LoRaArgumentParser
 from SX127x.board_config import BOARD
+# import cv2
 
 BOARD.setup()
 
@@ -64,7 +65,19 @@ class LoRaBeacon(LoRa):
             sys.exit(0)
         BOARD.led_off()
         sleep(args.wait)
-        self.write_payload([0x0f])
+        fd = open('/home/pi/Desktop/test.jpg', encoding='latin-1')
+        img_str = fd.read()
+        img_str_bytes = bytes(img_str, 'latin-1')
+        print(type(img_str_bytes))
+        fd.close()
+        counter = 0
+        length = len(img_str_bytes)
+        for i in img_str_bytes:
+            counter += 1
+            print("Send " + str(counter) + "/" + str(length))
+            self.write_payload(list(bytes(i)))
+        print("Done sending image!")
+        
         BOARD.led_on()
         self.set_mode(MODE.TX)
 
