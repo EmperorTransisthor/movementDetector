@@ -27,6 +27,7 @@ from time import sleep
 from SX127x.LoRa import *
 from SX127x.LoRaArgumentParser import LoRaArgumentParser
 from SX127x.board_config import BOARD
+# import cv2
 
 BOARD.setup()
 
@@ -34,6 +35,8 @@ parser = LoRaArgumentParser("A simple LoRa beacon")
 parser.add_argument('--single', '-S', dest='single', default=False, action="store_true", help="Single transmission")
 parser.add_argument('--wait', '-w', dest='wait', default=1, action="store", type=float, help="Waiting time between transmissions (default is 0s)")
 
+MAX_PAYLOAD_SIZE = 255              # higher amount of payload will result in master LoRa not reading incoming packets
+PAYLOAD_SIZE = MAX_PAYLOAD_SIZE
 
 class LoRaBeacon(LoRa):
 
@@ -64,7 +67,33 @@ class LoRaBeacon(LoRa):
             sys.exit(0)
         BOARD.led_off()
         sleep(args.wait)
-        self.write_payload([0x0f])
+        fd = open('/home/pi/movementDetector/Compressed.jpg', encoding='latin-1')
+        img_str = fd.read()
+        img_str_bytes = bytes(img_str, 'latin-1')
+        print(type(img_str_bytes))
+        fd.close()
+        counter = 0
+        length = len(img_str_bytes)
+
+        for i in img_str_bytes[::PAYLOAD_SIZE]:         # This loop has to be refactored to be properly used with img slicing
+            BOARD.led_off()
+            self.set_mode(MODE.STDBY)
+            self.clear_irq_flags(TxDone=1)
+            
+            part = img_str_bytes[(counter-1)*PAYLOAD_SIZE : counter*PAYLOAD_SIZE]
+            counter += 1
+            print("Send " + str(counter) + "/" + str(length//PAYLOAD_SIZE))
+            # print(part)
+            self.write_payload(list(part))
+            self.set_mode(MODE.TX)
+            BOARD.led_on()
+            if counter == length//PAYLOAD_SIZE:
+                break
+            sleep(2)                                    # Just so the master RPi will read payload
+
+
+        print("Done sending image!")
+        
         BOARD.led_on()
         self.set_mode(MODE.TX)
 
