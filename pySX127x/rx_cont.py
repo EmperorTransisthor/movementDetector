@@ -45,7 +45,7 @@ class LoRaRcvCont(LoRa):
         print("payloaddo")
         payload = self.read_payload(nocheck=True)
         print("Reddo")
-        print(bytes(payload).decode())
+        # print(bytes(payload).decode())
         self.set_mode(MODE.SLEEP)
         self.reset_ptr_rx()
         BOARD.led_off()
