@@ -5,11 +5,12 @@ sudo apt-get upgrade -y
 sudo raspi-config nonint do_spi 0
 sudo apt-get install python-dev python3-dev -y
 sudo apt-get install python3-pip
+sudo apt-get install libatlas-base-dev -y
 
 pip3 install RPi.GPIO
 pip3 install LoRaRF
 pip3 install wiringpi
-pip3 install opencv-python
+pip3 install opencv-python==4.6.0.66
 
 pythonVersion="$(python3 -V)"
 requiredVersion="3.6.0"
