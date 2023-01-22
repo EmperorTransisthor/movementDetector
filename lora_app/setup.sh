@@ -17,6 +17,8 @@ pip3 install RPi.GPIO
 pip3 install LoRaRF
 pip3 install wiringpi
 pip3 install opencv-python==4.6.0.66
+pip3 install picamera
+pip3 install pyserial
 
 pythonVersion="$(python3 -V)"
 requiredVersion="3.6.0"
