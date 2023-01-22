@@ -47,5 +47,8 @@ class GPGGAParser(object):
         self.timeOfFix = time.strftime(
             "%H:%M:%S", time.strptime(self.utc.split(".")[0], "%H%M%S")
         )
-        self.altitude = float(self.altitude)
+        try:
+            self.altitude = float(self.altitude)
+        except ValueError:
+            self.altitude = 0
         logging.debug("GPPGAParser finished")
