@@ -28,7 +28,7 @@ def index():
 @app.route("/photo", methods=["GET"])
 def photo():
     if not photo_exists():
-        abort(404, "There is no photo in app")
+        abort(404, f"There is no photo in app {get_photo_path()}")
     return send_file(
         get_photo_path(), mimetype="image/jpg", attachment_filename="photo.jpg"
     )
