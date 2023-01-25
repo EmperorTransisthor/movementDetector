@@ -1,4 +1,8 @@
-<title>Simple Map</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>IoT Map</title>
 <meta name="viewport" content="initial-scale=1.0">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
       integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
@@ -32,11 +36,14 @@
     const marker = L.marker([lat, lon]).addTo(map);
 
     let message = '';
-
-    {% if photo == true %}
-        message = '<a href="{{ path('photo') }}">Get photo from the movement</a>';
+    {% if cord_valid %}
+        {% if photo %}
+            message = '<a href="/photo">Get photo from the movement</a>';
+        {% else %}
+            message = 'Photo is not available';
+        {% endif %}
     {% else %}
-        message = 'Photo is not available';
+        message = 'Coordinates are not available. In the meantime check <a href="https://pw.edu.pl/">PW</a>'
     {% endif %}
 
     marker.bindPopup(message).openPopup();
@@ -47,5 +54,8 @@
     }).addTo(map);
 
 </script>
+</head>
+<body>
 
-
+</body>
+</html>
