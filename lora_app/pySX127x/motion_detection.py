@@ -17,7 +17,7 @@ raw_capture = PiRGBArray(camera, size=(640, 480))
 
 
 back_sub = cv2.createBackgroundSubtractorMOG2(
-    history=150, varThreshold=25, detectShadows=True
+    history=150, varThreshold=50, detectShadows=True
 )
 
 time.sleep(0.1)
