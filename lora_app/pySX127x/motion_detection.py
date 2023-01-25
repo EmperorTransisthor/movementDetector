@@ -10,6 +10,9 @@ import requests
 
 VISUAL = os.getenv("V", False)
 
+# Change location to current file
+os.chdir(os.path.abspath(__file__))
+
 camera = PiCamera()
 
 camera.resolution = (640, 480)
