@@ -6,7 +6,6 @@ import numpy as np
 from gps.gps import get_coords
 import lora_sender
 import os
-import requests
 
 VISUAL = os.getenv("V", False)
 
