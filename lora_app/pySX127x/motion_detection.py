@@ -6,6 +6,7 @@ import numpy as np
 from gps.gps import get_coords
 import lora_sender
 import os
+import requests
 
 VISUAL = os.getenv("V", False)
 
@@ -76,6 +77,16 @@ for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port
         msg = f"Motion detected @ {time_lapsed}s | location: {coords[0]} {coords[1]}"
         print(msg)
         lora_sender.send(msg)
+
+        # Save pic to web_app
+        try:
+            cv2.imwrite(
+                "../../web_app/resources/photo.jpg",
+                image,
+                params=(cv2.IMWRITE_JPEG_QUALITY, 50),
+            )
+        except:
+            pass
 
     key = cv2.waitKey(1) & 0xFF
     raw_capture.truncate(0)
