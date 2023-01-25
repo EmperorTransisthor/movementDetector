@@ -2,8 +2,6 @@ import serial
 from .parser import GPGGAParser
 
 
-
-
 def get_coords():
     try:
         s = serial.Serial("/dev/ttyS0")
