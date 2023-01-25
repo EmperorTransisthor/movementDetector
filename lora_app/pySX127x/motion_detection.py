@@ -10,7 +10,7 @@ import os
 VISUAL = os.getenv("V", False)
 
 # Change location to current file
-os.chdir(os.path.abspath(__file__))
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 camera = PiCamera()
 
