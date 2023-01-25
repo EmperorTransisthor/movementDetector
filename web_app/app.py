@@ -6,6 +6,8 @@ from lora.gps import get_coords
 
 
 PHOTO_PATH = "/resources/photo.jpg"
+# Change location to current file
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 app = Flask(__name__)
 
