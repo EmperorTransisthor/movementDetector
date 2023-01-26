@@ -10,6 +10,7 @@ PHOTO_PATH = "/resources/photo.jpg"
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 app = Flask(__name__)
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0  # Dont cache files
 
 """ Routes """
 
