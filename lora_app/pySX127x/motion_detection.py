@@ -87,8 +87,8 @@ for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port
                 image,
                 params=(cv2.IMWRITE_JPEG_QUALITY, 50),
             )
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
     key = cv2.waitKey(1) & 0xFF
     raw_capture.truncate(0)
